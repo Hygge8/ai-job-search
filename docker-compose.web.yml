@@ -17,6 +17,7 @@ services:
       - ./web-data:/app/web-data
       # Mount personalized local framework files at runtime instead of baking
       # names, contact details, experience, or generated CVs into the image.
+      - ./CLAUDE.md:/app/CLAUDE.md:ro
       - ./.claude/skills/job-application-assistant:/app/.claude/skills/job-application-assistant:ro
       - ./cv:/app/cv:ro
       - ./cover_letters:/app/cover_letters:ro
