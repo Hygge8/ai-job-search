@@ -1,0 +1,20 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    image: ai-job-search-web:latest
+    container_name: ai-job-search-web
+    init: true
+    env_file:
+      - .env.web
+    environment:
+      WEB_DATABASE_FILE: /app/web-data/app.sqlite3
+    ports:
+      - "${SERVER_PORT:-8000}:8000"
+    volumes:
+      - ./web-data:/app/web-data
+      # Keep the locally generated profile available without baking personal data
+      # into a published image. The web UI can import this file into SQLite.
+      - ./.claude/skills/job-application-assistant/01-candidate-profile.md:/app/.claude/skills/job-application-assistant/01-candidate-profile.md:ro
+    restart: unless-stopped
