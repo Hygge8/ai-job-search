@@ -4,24 +4,34 @@ FROM python:3.11-slim-bookworm
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=noninteractive \
     TZ=Asia/Shanghai
 
 WORKDIR /app
-
 COPY --from=bun-runtime /usr/local/bin/bun /usr/local/bin/bun
+
+# Full /apply needs both TeX engines, moderncv/fontawesome packages, CJK fonts,
+# Poppler PDF inspection/rendering tools, and a tiny init process.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       ca-certificates tini \
+       texlive-luatex texlive-xetex texlive-latex-extra texlive-fonts-extra texlive-lang-chinese \
+       fonts-noto-cjk poppler-utils ghostscript \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY requirements-web.txt /app/requirements-web.txt
 RUN pip install --no-cache-dir -r /app/requirements-web.txt
 
-# Only copy the files required by the web runtime. Personal documents and generated
-# application PDFs are intentionally not baked into the image.
+# .dockerignore prevents local CVs, profile data, API keys, generated PDFs,
+# trackers, and documents from entering the build context.
 COPY webapp /app/webapp
 COPY .agents /app/.agents
 COPY .claude /app/.claude
-COPY CLAUDE.md /app/CLAUDE.md
+COPY salary_lookup.py /app/salary_lookup.py
+COPY cover_letters/cover.cls /app/cover_letters/cover.cls
+COPY cover_letters/OpenFonts /app/cover_letters/OpenFonts
 
-# Install dependencies for all shipped job portal CLIs. Portals with no runtime
-# dependencies still work; bun install only adds their development/runtime packages.
 RUN set -eux; \
     for tool in jobbank-search jobdanmark-search jobindex-search jobnet-search linkedin-search freehire-search; do \
       cli="/app/.agents/skills/${tool}/cli"; \
@@ -31,8 +41,8 @@ RUN set -eux; \
       fi; \
     done; \
     cd /app; \
-    mkdir -p /app/web-data
+    mkdir -p /app/web-data/applications /app/cv /app/cover_letters
 
 EXPOSE 8000
-
-CMD ["python", "-m", "webapp.main"]
+ENTRYPOINT ["tini", "--"]
+CMD ["python", "-m", "webapp.full_app"]
