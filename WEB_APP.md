@@ -1,12 +1,12 @@
 # AI Job Search Web - Complete `/apply`
 
-The repository includes an optional browser application alongside the original Claude Code workflow. It follows the same local-first deployment pattern as `Hygge8/ai-goofish-smart-monitor`: FastAPI, server-side OpenAI-compatible model calls, SQLite persistence, Docker Compose, and a password-protected browser UI.
+The repository includes an optional browser application alongside the original Claude Code workflow. It uses FastAPI, server-side OpenAI-compatible model calls, SQLite persistence, Docker Compose, and a password-protected browser UI.
 
 The Claude Code commands remain available. The browser and terminal workflows can use the same personalized profile files.
 
 ## Complete browser `/apply` workflow
 
-The browser implementation preserves the ordered stages of `.claude/commands/apply.md`:
+The browser preserves the ordered stages of `.claude/commands/apply.md`:
 
 1. Parse a pasted JD or safely fetch a public job URL.
 2. Extract company, role, department, location, language, responsibilities, and required/preferred keywords.
@@ -15,39 +15,57 @@ The browser implementation preserves the ordered stages of `.claude/commands/app
 5. Generate a complete English moderncv CV and a posting-language cover letter.
 6. Run an independent reviewer using a fresh model call and available company research.
 7. Apply structured and narrative feedback while rejecting unsupported claims.
-8. Compile the CV with `lualatex` and the cover letter with `xelatex`.
+8. Compile with `lualatex` and `xelatex`.
 9. Require exactly two CV pages and exactly one cover-letter page.
-10. Render every PDF page to PNG and use a vision-capable model to check clipping, overlaps, orphaned entries, whitespace, signature placement, and font consistency.
-11. Repair and recompile up to `APPLY_MAX_REPAIR_ATTEMPTS` times.
-12. Run `pdftotext -layout`, verify literal contact details, reading order, dates, and keyword coverage.
-13. Add only genuine `missing (have it)` keywords, recompile, and recheck. Genuine gaps stay visible.
-14. Run the final factual accuracy, targeting, consistency, quality, PDF, and ATS checklist once.
-15. Produce downloadable `.tex`, `.pdf`, JSON reports, Markdown report, and `application_bundle.zip`.
+10. Render every PDF page to PNG and use a vision-capable model to inspect layout.
+11. Repair and recompile up to the configured maximum attempts.
+12. Run `pdftotext -layout` ATS checks and truthful keyword-coverage analysis.
+13. Add only genuine `missing (have it)` keywords, then recompile and recheck.
+14. Run the final factual accuracy, targeting, consistency, quality, PDF, and ATS verification pass.
+15. Produce downloadable `.tex`, `.pdf`, JSON/Markdown reports, and a ZIP bundle.
 
-The workflow is implemented in:
+## Browser system settings
 
-```text
-webapp/apply_common.py
-webapp/apply_documents.py
-webapp/apply_pdf.py
-webapp/full_apply.py
-webapp/full_app.py
-```
+After logging in, open **系统设置**. The page supports:
+
+- OpenAI-compatible base URL
+- text model name
+- vision model name
+- OpenAI API Key
+- request timeout
+- strict `/apply` mode
+- maximum PDF repair attempts
+- Tavily API Key
+- whether company research is mandatory
+- browser administrator username and password
+
+The page also provides three live checks:
+
+- **测试文本模型**
+- **测试视觉模型** using an actual image input
+- **测试 Tavily**
+
+### Secret handling
+
+- Secret inputs are blank after every page load.
+- The browser receives only `configured: true/false`, never the saved key or password.
+- Leaving a secret input blank preserves the existing value.
+- A separate checkbox is required to clear a saved OpenAI or Tavily key.
+- Saved values are stored server-side in `web-data/app.sqlite3`.
+- Browser-saved values override `.env.web` immediately and survive container restarts.
+- Changing the administrator account automatically updates the current browser session.
+
+`SERVER_PORT` is intentionally not editable in the browser because changing it also requires updating Docker's host-port mapping. Continue managing the port through `.env.web` and Docker Compose.
 
 ## Privacy and safety
 
-- `OPENAI_API_KEY` is read only by the FastAPI process and is never returned to the browser.
+- API keys are never returned to the browser.
 - Job descriptions and fetched pages are treated as untrusted data, not model instructions.
 - Public URL fetching blocks localhost, private IPs, link-local ranges, and non-HTTP protocols.
+- Every redirect target is checked again before it is fetched.
 - `.env.web`, `web-data/`, generated PDFs, local CVs, documents, trackers, and personalized profile files are excluded from Git and the Docker build context.
 - Personalized `.claude`, `cv`, and `cover_letters` directories are mounted read-only at runtime.
 - The application is intended for local/private-network use. Add HTTPS and stronger reverse-proxy authentication before public exposure.
-
-## Requirements
-
-Docker is recommended. The image installs Python 3.11, Bun, `lualatex`, `xelatex`, moderncv/font packages, CJK support, `pdfinfo`, `pdftoppm`, `pdftotext`, and Ghostscript.
-
-The image is substantially larger than the earlier MVP because complete PDF compilation and rendering require TeX Live and fonts.
 
 ## Windows Docker deployment
 
@@ -55,21 +73,20 @@ The image is substantially larger than the earlier MVP because complete PDF comp
 cd /d "D:\项目\docker\ai-job-search"
 git fetch origin
 git switch agent/web-ai-mvp
+git pull origin agent/web-ai-mvp
 copy .env.web.example .env.web
 notepad .env.web
 ```
 
-Configure at least:
+For first login, at minimum choose a strong bootstrap password:
 
 ```env
-OPENAI_API_KEY=your-key
-OPENAI_BASE_URL=
-OPENAI_MODEL_NAME=your-text-model
-OPENAI_VISION_MODEL_NAME=your-vision-capable-model
+SERVER_PORT=8000
 WEB_USERNAME=admin
 WEB_PASSWORD=replace-this-password
-STRICT_APPLY_MODE=true
 ```
+
+AI settings may be entered either in `.env.web` before startup or later from the browser's **系统设置** page.
 
 Start:
 
@@ -90,37 +107,34 @@ Stop:
 docker compose --env-file .env.web -f docker-compose.web.yml down
 ```
 
+## First-use sequence
+
+1. Log in with the bootstrap credentials from `.env.web`.
+2. Open **系统设置**.
+3. Enter the base URL, text model, vision model, and API Key.
+4. Save the settings.
+5. Run the text-model and vision-model tests.
+6. Add Tavily only when broader company research is needed.
+7. Open **候选人档案** and import the profile generated by `/setup`.
+8. Search a public job or paste a complete JD into **完整 /apply**.
+9. Evaluate, review the score and gaps, then explicitly confirm drafting.
+10. Watch the ordered stages and download the final files.
+
 ## Company research
 
-The reviewer can use the job page itself without another key. For broader company/news/project research, configure Tavily:
+The reviewer can use the job page itself without another key. Tavily adds broader company, news, project, mission, and team research.
 
-```env
-TAVILY_API_KEY=your-research-key
-REQUIRE_COMPANY_RESEARCH=true
-```
+When company research is not mandatory, a missing or failed Tavily request is recorded as degraded mode. The workflow must not invent company claims.
 
-When `REQUIRE_COMPANY_RESEARCH=false`, lack of external search is recorded as degraded research rather than silently inventing company claims.
+When **强制公司研究** is enabled, the preflight check blocks the workflow unless Tavily is configured and usable.
 
 ## Salary benchmarking
 
-The existing `salary_lookup.py` is used when `salary_data.json` exists. In Docker, create the file locally and uncomment this volume in `docker-compose.web.yml`:
-
-```yaml
-- ./salary_data.json:/app/salary_data.json:ro
-```
+The existing `salary_lookup.py` is used when `salary_data.json` exists. In Docker, create the file locally and uncomment the salary-data volume in `docker-compose.web.yml`.
 
 If salary data is absent, the evaluation records that salary benchmarking was skipped.
 
-## Browser usage
-
-1. Open **候选人档案** and import the profile generated by `/setup`.
-2. Search public LinkedIn/FreeHire jobs, or open **完整 /apply** directly.
-3. Paste the complete JD. A URL alone works only when the public page is accessible without login, captcha, or anti-bot restrictions.
-4. Click **第 1 步：评估匹配度**.
-5. Review the score, strengths, gaps, and recommendation.
-6. Click **确认并执行完整 /apply**.
-7. Watch the ordered background stages.
-8. Download the final PDFs or ZIP bundle.
+## Chinese recruitment portals
 
 BOSS, Liepin, Zhaopin, and similar login-walled portals should be used by manually copying the complete JD. The system does not bypass login, captcha, device fingerprinting, or anti-bot protections.
 
@@ -156,39 +170,15 @@ Temporary `.aux`, `.log`, `.out`, extracted text, and rendered PNG files are rem
 
 ## Strict and degraded modes
 
-`STRICT_APPLY_MODE=true` most closely matches Claude Code `/apply`:
+Strict mode most closely matches Claude Code `/apply`:
 
 - missing TeX or Poppler commands block execution;
 - a vision-model failure blocks completion;
 - PDF page-count/layout failures block completion;
 - ATS text-layer failures block completion;
-- a failed final verification leaves the task failed, while preserving reports and artifacts for diagnosis.
+- failed final verification leaves the task failed while preserving reports and artifacts.
 
-Set `STRICT_APPLY_MODE=false` only when intentionally accepting degraded checks.
-
-## Local development without Docker
-
-Install Python 3.11+, Bun, a TeX distribution containing moderncv/fontawesome/CJK packages, and Poppler. Then:
-
-```cmd
-cd /d "D:\项目\docker\ai-job-search"
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements-web.txt
-copy .env.web.example .env.web
-python -m webapp.full_app
-```
-
-Install portal CLI dependencies:
-
-```powershell
-$tools = @("jobbank-search", "jobdanmark-search", "jobindex-search", "jobnet-search", "linkedin-search", "freehire-search")
-foreach ($tool in $tools) {
-  Set-Location ".agents/skills/$tool/cli"
-  bun install
-  Set-Location "../../../.."
-}
-```
+Disable strict mode only when intentionally accepting degraded checks.
 
 ## API overview
 
@@ -196,19 +186,21 @@ All `/api/*` endpoints require HTTP Basic authentication.
 
 | Endpoint | Method | Purpose |
 |---|---|---|
-| `/health` | GET | Runtime status |
-| `/api/profile` | GET/PUT | Read/save candidate profile |
+| `/api/settings` | GET/PUT | Read safe settings status or save server-side settings |
+| `/api/settings/test-text` | POST | Test the configured text model |
+| `/api/settings/test-vision` | POST | Test image input on the configured vision model |
+| `/api/settings/test-tavily` | POST | Test Tavily research access |
+| `/api/profile` | GET/PUT | Read or save the candidate profile |
 | `/api/jobs/search` | POST | Search installed portal CLIs |
 | `/api/full-apply/evaluate` | POST | Parse/evaluate and wait for confirmation |
 | `/api/full-apply/{id}/confirm` | POST | Start the remaining workflow |
 | `/api/full-apply/{id}` | GET | Poll status, steps, results, and artifacts |
-| `/api/full-apply/{id}/artifacts` | GET | List generated files |
-| `/api/full-apply/{id}/download/{name}` | GET | Download one file |
+| `/api/full-apply/{id}/download/{name}` | GET | Download one generated file |
 
 ## Validation
-
-Source-level tests AST-parse the backend, verify ordered workflow stages and TeX/Poppler commands, check route/UI wiring, and verify secret/personal-data ignore rules.
 
 ```bash
 python -m unittest discover -s tests -t . -v
 ```
+
+The source-level tests parse every backend module, verify settings routes and secret non-disclosure, check ordered workflow stages, confirm TeX/Poppler command wiring, and validate privacy ignore rules.
