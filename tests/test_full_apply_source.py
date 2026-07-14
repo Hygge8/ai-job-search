@@ -1,8 +1,8 @@
 """Source-level checks for the complete browser /apply workflow.
 
 The default CI job does not install the optional web runtime, so these tests
-validate syntax, route wiring, ordered stages, and privacy rules without
-importing FastAPI or OpenAI.
+validate syntax, route wiring, ordered stages, settings, and privacy rules
+without importing FastAPI or OpenAI.
 """
 from __future__ import annotations
 
@@ -21,6 +21,8 @@ class FullApplySourceTests(unittest.TestCase):
             "webapp/apply_pdf.py",
             "webapp/full_apply.py",
             "webapp/full_app.py",
+            "webapp/settings_service.py",
+            "webapp/settings_api.py",
         ):
             source = (ROOT / relative).read_text(encoding="utf-8")
             ast.parse(source, filename=relative)
@@ -52,7 +54,9 @@ class FullApplySourceTests(unittest.TestCase):
             "/api/full-apply/{job_id}/download/{name:path}",
         ):
             self.assertIn(marker, routes)
+        self.assertIn("app.include_router(settings_router)", routes)
         self.assertIn("完整 /apply", ui)
+        self.assertIn("系统设置", ui)
         self.assertIn("/api/full-apply/evaluate", ui)
         self.assertIn("/api/full-apply/${state.applyId}/confirm", ui)
 
