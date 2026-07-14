@@ -2,459 +2,52 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>AI Job Search Web</title>
   <style>
-    :root {
-      color-scheme: dark;
-      --bg: #0f1115;
-      --panel: #171a21;
-      --panel-2: #1d222b;
-      --line: #2e3542;
-      --text: #eef2f7;
-      --muted: #aeb7c5;
-      --accent: #7dd3fc;
-      --accent-2: #a7f3d0;
-      --danger: #fca5a5;
-      --shadow: 0 18px 50px rgba(0, 0, 0, .28);
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: radial-gradient(circle at 10% 0%, #172133 0, transparent 32%), var(--bg);
-      color: var(--text);
-    }
-    button, input, textarea, select { font: inherit; }
-    button { cursor: pointer; }
-    .shell { display: grid; grid-template-columns: 250px minmax(0, 1fr); min-height: 100vh; }
-    .sidebar {
-      padding: 24px 18px;
-      background: rgba(18, 21, 27, .92);
-      border-right: 1px solid var(--line);
-      position: sticky;
-      top: 0;
-      height: 100vh;
-    }
-    .brand { font-size: 20px; font-weight: 750; letter-spacing: .2px; margin-bottom: 6px; }
-    .brand-sub { color: var(--muted); font-size: 13px; margin-bottom: 26px; }
-    .nav { display: grid; gap: 8px; }
-    .nav button {
-      width: 100%;
-      text-align: left;
-      color: var(--muted);
-      border: 1px solid transparent;
-      background: transparent;
-      border-radius: 12px;
-      padding: 11px 13px;
-    }
-    .nav button.active { color: var(--text); border-color: var(--line); background: var(--panel-2); }
-    .status-box {
-      position: absolute;
-      left: 18px;
-      right: 18px;
-      bottom: 20px;
-      padding: 12px;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.6;
-    }
-    main { padding: 30px; max-width: 1320px; width: 100%; margin: 0 auto; }
-    .header { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; margin-bottom: 24px; }
-    h1 { margin: 0 0 6px; font-size: 28px; }
-    .subtitle { color: var(--muted); }
-    .header-actions { display: flex; gap: 10px; }
-    .btn {
-      border: 1px solid var(--line);
-      background: var(--panel-2);
-      color: var(--text);
-      border-radius: 10px;
-      padding: 10px 14px;
-    }
-    .btn.primary { background: var(--accent); color: #092233; border-color: transparent; font-weight: 700; }
-    .btn.good { background: var(--accent-2); color: #08251c; border-color: transparent; font-weight: 700; }
-    .btn:disabled { opacity: .5; cursor: not-allowed; }
-    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 18px; }
-    .card {
-      grid-column: span 12;
-      background: linear-gradient(180deg, rgba(30, 35, 44, .95), rgba(23, 26, 33, .95));
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 20px;
-      box-shadow: var(--shadow);
-    }
-    .card.half { grid-column: span 6; }
-    .card.third { grid-column: span 4; }
-    .card h2 { margin: 0 0 14px; font-size: 17px; }
-    .field { display: grid; gap: 7px; margin-bottom: 14px; }
-    label { color: var(--muted); font-size: 13px; }
-    input, textarea, select {
-      width: 100%;
-      color: var(--text);
-      background: #10141a;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 11px 12px;
-      outline: none;
-    }
-    input:focus, textarea:focus, select:focus { border-color: var(--accent); }
-    textarea { min-height: 180px; resize: vertical; line-height: 1.55; }
-    #profileText { min-height: 540px; }
-    .row { display: grid; grid-template-columns: repeat(12, 1fr); gap: 12px; }
-    .span-3 { grid-column: span 3; }
-    .span-4 { grid-column: span 4; }
-    .span-6 { grid-column: span 6; }
-    .span-8 { grid-column: span 8; }
-    .span-9 { grid-column: span 9; }
-    .span-12 { grid-column: span 12; }
-    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
-    .notice { color: var(--muted); font-size: 13px; margin-top: 10px; }
-    .error { color: var(--danger); white-space: pre-wrap; }
-    .success { color: var(--accent-2); }
-    .results { display: grid; gap: 12px; margin-top: 16px; }
-    .job {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 14px;
-      background: rgba(13, 16, 22, .55);
-    }
-    .job-head { display: flex; justify-content: space-between; gap: 12px; }
-    .job-title { font-weight: 720; }
-    .job-meta { color: var(--muted); font-size: 13px; margin-top: 5px; }
-    .source { color: var(--accent); font-size: 12px; }
-    .job a { color: var(--accent); text-decoration: none; }
-    pre {
-      white-space: pre-wrap;
-      word-break: break-word;
-      margin: 0;
-      padding: 16px;
-      background: #0d1016;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      line-height: 1.55;
-      max-height: 620px;
-      overflow: auto;
-    }
-    .history-item { border-bottom: 1px solid var(--line); padding: 12px 0; }
-    .history-item:last-child { border-bottom: 0; }
-    .history-title { font-weight: 650; }
-    .history-meta { color: var(--muted); font-size: 12px; margin-top: 3px; }
-    [hidden] { display: none !important; }
-    .login-layer {
-      position: fixed;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      background: rgba(5, 7, 10, .78);
-      backdrop-filter: blur(12px);
-      z-index: 20;
-    }
-    .login-card {
-      width: min(420px, calc(100vw - 32px));
-      padding: 26px;
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      background: var(--panel);
-      box-shadow: var(--shadow);
-    }
-    .login-card h2 { margin-top: 0; }
-    @media (max-width: 900px) {
-      .shell { grid-template-columns: 1fr; }
-      .sidebar { height: auto; position: static; border-right: 0; border-bottom: 1px solid var(--line); }
-      .nav { grid-template-columns: repeat(4, 1fr); }
-      .status-box { position: static; margin-top: 14px; }
-      main { padding: 20px 14px; }
-      .card.half, .card.third { grid-column: span 12; }
-      .span-3, .span-4, .span-6, .span-8, .span-9 { grid-column: span 12; }
-    }
+    :root{color-scheme:dark;--bg:#0e1117;--panel:#171b23;--panel2:#1f2530;--line:#303846;--text:#eef3f8;--muted:#aab4c2;--blue:#7dd3fc;--green:#86efac;--red:#fca5a5;--yellow:#fde68a}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 10% 0,#17233a 0,transparent 32%),var(--bg);color:var(--text);font-family:Inter,system-ui,"Segoe UI",sans-serif}button,input,textarea{font:inherit}.shell{display:grid;grid-template-columns:245px minmax(0,1fr);min-height:100vh}.side{padding:24px 18px;border-right:1px solid var(--line);background:rgba(17,20,27,.94);position:sticky;top:0;height:100vh}.brand{font-size:20px;font-weight:800}.sub,.muted{color:var(--muted)}.sub{font-size:12px;margin:5px 0 24px}.nav{display:grid;gap:8px}.nav button,.btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:11px;padding:10px 13px;cursor:pointer}.nav button{text-align:left;background:transparent;border-color:transparent}.nav button.active{background:var(--panel2);border-color:var(--line)}.btn.primary{background:var(--blue);color:#092234;border-color:transparent;font-weight:750}.btn.good{background:var(--green);color:#08251b;border-color:transparent;font-weight:750}.btn:disabled{opacity:.5;cursor:not-allowed}.status{position:absolute;left:18px;right:18px;bottom:20px;border:1px solid var(--line);border-radius:12px;padding:12px;color:var(--muted);font-size:12px;line-height:1.6}main{width:min(1320px,100%);margin:auto;padding:30px}.head{display:flex;justify-content:space-between;gap:20px;margin-bottom:22px}h1{margin:0 0 6px;font-size:28px}.card{background:linear-gradient(180deg,rgba(31,37,48,.96),rgba(23,27,35,.96));border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:18px}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}.half{grid-column:span 6}.row{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}.s3{grid-column:span 3}.s6{grid-column:span 6}.s12{grid-column:span 12}.field{display:grid;gap:7px;margin-bottom:13px}label{font-size:13px;color:var(--muted)}input,textarea{width:100%;border:1px solid var(--line);border-radius:10px;background:#0e131a;color:var(--text);padding:11px 12px;outline:none}textarea{min-height:190px;resize:vertical;line-height:1.55}#profileText{min-height:560px}.actions{display:flex;gap:10px;flex-wrap:wrap}.notice{margin-top:10px;color:var(--muted);font-size:13px}.error{color:var(--red);white-space:pre-wrap}.success{color:var(--green)}pre{white-space:pre-wrap;word-break:break-word;background:#0c1016;border:1px solid var(--line);border-radius:12px;padding:15px;max-height:680px;overflow:auto;line-height:1.5}.job,.step,.history{border:1px solid var(--line);border-radius:12px;padding:13px;background:rgba(12,16,22,.52);margin-top:10px}.jobtop{display:flex;justify-content:space-between;gap:12px}.title{font-weight:750}.meta{color:var(--muted);font-size:12px;margin-top:5px}.steps{display:grid;gap:8px}.step{display:grid;grid-template-columns:22px minmax(0,1fr);margin:0}.dot{width:12px;height:12px;border-radius:50%;margin-top:4px;background:#596273}.step.completed .dot{background:var(--green)}.step.running .dot{background:var(--blue);box-shadow:0 0 0 5px rgba(125,211,252,.12)}.step.failed .dot{background:var(--red)}.step.waiting .dot{background:var(--yellow)}.artifact{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding:9px 0}.artifact:last-child{border:0}[hidden]{display:none!important}.login{position:fixed;inset:0;display:grid;place-items:center;background:rgba(4,6,9,.82);backdrop-filter:blur(10px);z-index:20}.loginbox{width:min(420px,calc(100vw - 30px));background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:25px}@media(max-width:900px){.shell{grid-template-columns:1fr}.side{height:auto;position:static;border-right:0;border-bottom:1px solid var(--line)}.nav{grid-template-columns:repeat(4,1fr)}.status{position:static;margin-top:14px}.half,.s3,.s6{grid-column:span 12}main{padding:18px 13px}}
   </style>
 </head>
 <body>
-  <div id="loginLayer" class="login-layer">
-    <form id="loginForm" class="login-card">
-      <h2>登录 AI Job Search</h2>
-      <p class="subtitle">账号由服务器的 WEB_USERNAME / WEB_PASSWORD 配置。</p>
-      <div class="field"><label>用户名</label><input id="loginUser" value="admin" autocomplete="username" /></div>
-      <div class="field"><label>密码</label><input id="loginPassword" type="password" autocomplete="current-password" /></div>
-      <button class="btn primary" type="submit">登录</button>
-      <div id="loginError" class="error notice"></div>
-    </form>
-  </div>
-
-  <div class="shell">
-    <aside class="sidebar">
-      <div class="brand">AI Job Search</div>
-      <div class="brand-sub">本地网页版 · API Key 仅保存在服务端</div>
-      <div class="nav">
-        <button data-page="profile" class="active">候选人档案</button>
-        <button data-page="search">岗位搜索</button>
-        <button data-page="application">分析与申请</button>
-        <button data-page="history">历史记录</button>
-      </div>
-      <div id="systemStatus" class="status-box">正在读取系统状态…</div>
-    </aside>
-
-    <main>
-      <div class="header">
-        <div>
-          <h1 id="pageTitle">候选人档案</h1>
-          <div id="pageSubtitle" class="subtitle">网页版资料会保存在本地 SQLite 中。</div>
-        </div>
-        <div class="header-actions"><button id="logoutBtn" class="btn">退出</button></div>
-      </div>
-
-      <section id="page-profile" class="page">
-        <div class="card">
-          <h2>个人资料</h2>
-          <div class="field">
-            <label>Markdown 格式的候选人档案</label>
-            <textarea id="profileText" placeholder="姓名、教育、经历、技能、目标岗位、限制条件……"></textarea>
-          </div>
-          <div class="actions">
-            <button id="saveProfileBtn" class="btn primary">保存档案</button>
-            <button id="importProfileBtn" class="btn">从本地 Claude 档案重新导入</button>
-          </div>
-          <div id="profileMessage" class="notice"></div>
-        </div>
-      </section>
-
-      <section id="page-search" class="page" hidden>
-        <div class="card">
-          <h2>搜索公开岗位</h2>
-          <div class="row">
-            <div class="field span-6"><label>关键词</label><input id="searchQuery" value="Hadoop 运维" /></div>
-            <div class="field span-3"><label>地点</label><input id="searchLocation" value="Shanghai, China" /></div>
-            <div class="field span-3"><label>最近天数</label><input id="searchAge" type="number" value="14" min="1" max="365" /></div>
-          </div>
-          <div class="actions"><button id="searchBtn" class="btn primary">开始搜索</button></div>
-          <div id="searchMessage" class="notice"></div>
-          <div id="jobResults" class="results"></div>
-        </div>
-      </section>
-
-      <section id="page-application" class="page" hidden>
-        <div class="grid">
-          <div class="card half">
-            <h2>岗位信息</h2>
-            <div class="row">
-              <div class="field span-6"><label>公司</label><input id="jobCompany" /></div>
-              <div class="field span-6"><label>岗位</label><input id="jobTitle" /></div>
-              <div class="field span-12"><label>岗位链接（可选）</label><input id="jobUrl" /></div>
-            </div>
-            <div class="field"><label>完整 JD</label><textarea id="jobDescription" placeholder="从 BOSS直聘、猎聘或企业官网复制完整岗位描述……"></textarea></div>
-            <div class="actions">
-              <button id="evaluateBtn" class="btn primary">评估匹配度</button>
-              <button id="generateBtn" class="btn good">生成申请材料</button>
-            </div>
-            <div id="applicationMessage" class="notice"></div>
-          </div>
-          <div class="card half">
-            <h2>AI 输出</h2>
-            <pre id="aiOutput">等待提交岗位信息。</pre>
-          </div>
-        </div>
-      </section>
-
-      <section id="page-history" class="page" hidden>
-        <div class="card">
-          <div class="actions" style="justify-content: space-between; align-items: center;">
-            <h2 style="margin:0">历史记录</h2>
-            <button id="refreshHistoryBtn" class="btn">刷新</button>
-          </div>
-          <div id="historyList" class="results"></div>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <script>
-    const state = { auth: sessionStorage.getItem('jobSearchAuth') || '' };
-    const titles = {
-      profile: ['候选人档案', '网页版资料会保存在本地 SQLite 中。'],
-      search: ['岗位搜索', '调用仓库内现有 LinkedIn / FreeHire CLI，自动合并和去重。'],
-      application: ['分析与申请', 'API Key 只在后端使用，浏览器不会获得明文密钥。'],
-      history: ['历史记录', '查看搜索、岗位评估和申请材料生成记录。'],
-    };
-
-    function authHeader() { return state.auth ? { Authorization: `Basic ${state.auth}` } : {}; }
-    async function api(path, options = {}) {
-      const headers = { 'Content-Type': 'application/json', ...authHeader(), ...(options.headers || {}) };
-      const response = await fetch(path, { ...options, headers });
-      const data = await response.json().catch(() => ({}));
-      if (response.status === 401) {
-        showLogin('登录失效，请重新登录。');
-        throw new Error(data.detail || '未授权');
-      }
-      if (!response.ok) throw new Error(data.detail || JSON.stringify(data));
-      return data;
-    }
-    function setBusy(button, busy, text = '处理中…') {
-      if (!button.dataset.label) button.dataset.label = button.textContent;
-      button.disabled = busy;
-      button.textContent = busy ? text : button.dataset.label;
-    }
-    function message(element, text, type = '') {
-      element.textContent = text || '';
-      element.className = `notice ${type}`;
-    }
-    function pretty(value) { return JSON.stringify(value, null, 2); }
-    function escapeHtml(value = '') {
-      return String(value).replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
-    }
-
-    function showLogin(error = '') {
-      document.getElementById('loginLayer').style.display = 'grid';
-      document.getElementById('loginError').textContent = error;
-    }
-    function hideLogin() { document.getElementById('loginLayer').style.display = 'none'; }
-
-    async function loadConfig() {
-      const config = await api('/api/config');
-      const el = document.getElementById('systemStatus');
-      el.innerHTML = [
-        `模型：${escapeHtml(config.model_name || '未配置')}`,
-        `AI：${config.model_configured ? '已配置' : '未配置'}`,
-        `岗位源：${config.job_sources.join(' / ')}`
-      ].join('<br>');
-    }
-    async function loadProfile() {
-      const data = await api('/api/profile');
-      document.getElementById('profileText').value = data.content || '';
-    }
-    async function loadHistory() {
-      const data = await api('/api/history');
-      const list = document.getElementById('historyList');
-      list.innerHTML = data.items.length ? data.items.map(item => `
-        <div class="history-item">
-          <div class="history-title">${escapeHtml(item.title)}</div>
-          <div class="history-meta">${escapeHtml(item.kind)} · ${escapeHtml(item.created_at)}</div>
-          <details style="margin-top:8px"><summary>查看结果</summary><pre style="margin-top:8px">${escapeHtml(pretty(item.result))}</pre></details>
-        </div>`).join('') : '<div class="notice">暂无记录。</div>';
-    }
-
-    document.getElementById('loginForm').addEventListener('submit', async event => {
-      event.preventDefault();
-      const user = document.getElementById('loginUser').value;
-      const password = document.getElementById('loginPassword').value;
-      state.auth = btoa(unescape(encodeURIComponent(`${user}:${password}`)));
-      try {
-        await loadConfig();
-        sessionStorage.setItem('jobSearchAuth', state.auth);
-        hideLogin();
-        await loadProfile();
-      } catch (error) {
-        state.auth = '';
-        document.getElementById('loginError').textContent = error.message;
-      }
-    });
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-      sessionStorage.removeItem('jobSearchAuth');
-      state.auth = '';
-      showLogin();
-    });
-
-    document.querySelectorAll('.nav button').forEach(button => button.addEventListener('click', async () => {
-      const page = button.dataset.page;
-      document.querySelectorAll('.nav button').forEach(item => item.classList.toggle('active', item === button));
-      document.querySelectorAll('.page').forEach(section => { section.hidden = section.id !== `page-${page}`; });
-      document.getElementById('pageTitle').textContent = titles[page][0];
-      document.getElementById('pageSubtitle').textContent = titles[page][1];
-      if (page === 'history') await loadHistory();
-    }));
-
-    document.getElementById('saveProfileBtn').addEventListener('click', async event => {
-      const button = event.currentTarget;
-      setBusy(button, true);
-      try {
-        await api('/api/profile', { method: 'PUT', body: JSON.stringify({ content: document.getElementById('profileText').value }) });
-        message(document.getElementById('profileMessage'), '档案已保存。', 'success');
-      } catch (error) { message(document.getElementById('profileMessage'), error.message, 'error'); }
-      finally { setBusy(button, false); }
-    });
-    document.getElementById('importProfileBtn').addEventListener('click', async event => {
-      const button = event.currentTarget;
-      setBusy(button, true);
-      try {
-        const data = await api('/api/profile/import-local', { method: 'POST' });
-        document.getElementById('profileText').value = data.content;
-        message(document.getElementById('profileMessage'), `已从 ${data.source} 导入。`, 'success');
-      } catch (error) { message(document.getElementById('profileMessage'), error.message, 'error'); }
-      finally { setBusy(button, false); }
-    });
-
-    document.getElementById('searchBtn').addEventListener('click', async event => {
-      const button = event.currentTarget;
-      const target = document.getElementById('jobResults');
-      setBusy(button, true, '搜索中…');
-      target.innerHTML = '';
-      message(document.getElementById('searchMessage'), '正在调用公开岗位源，请稍候。');
-      try {
-        const payload = {
-          query: document.getElementById('searchQuery').value,
-          location: document.getElementById('searchLocation').value,
-          jobage: Number(document.getElementById('searchAge').value || 14),
-          limit: 20,
-        };
-        const data = await api('/api/jobs/search', { method: 'POST', body: JSON.stringify(payload) });
-        message(document.getElementById('searchMessage'), `找到 ${data.count} 个岗位。${data.errors.length ? ' 部分岗位源失败，详见下方。' : ''}`, data.count ? 'success' : '');
-        const jobs = data.results.map((job, index) => `
-          <div class="job">
-            <div class="job-head"><div><div class="job-title">${escapeHtml(job.title || '未命名岗位')}</div><div class="job-meta">${escapeHtml(job.company || '未知公司')} · ${escapeHtml(job.location || '地点未知')} · ${escapeHtml(job.date || '日期未知')}</div></div><div class="source">${escapeHtml(job.source)}</div></div>
-            <div class="actions" style="margin-top:12px">
-              ${job.url ? `<a class="btn" href="${escapeHtml(job.url)}" target="_blank" rel="noreferrer">打开岗位</a>` : ''}
-              <button class="btn" data-job-index="${index}">转到分析</button>
-            </div>
-          </div>`).join('');
-        const errors = data.errors.map(item => `<div class="error">${escapeHtml(item.source)}：${escapeHtml(item.error)}</div>`).join('');
-        target.innerHTML = jobs + errors || '<div class="notice">没有返回岗位，请调整关键词或地点。</div>';
-        target.querySelectorAll('[data-job-index]').forEach(btn => btn.addEventListener('click', () => {
-          const job = data.results[Number(btn.dataset.jobIndex)];
-          document.getElementById('jobCompany').value = job.company || '';
-          document.getElementById('jobTitle').value = job.title || '';
-          document.getElementById('jobUrl').value = job.url || '';
-          document.getElementById('jobDescription').value = job.description || '';
-          document.querySelector('[data-page="application"]').click();
-        }));
-      } catch (error) { message(document.getElementById('searchMessage'), error.message, 'error'); }
-      finally { setBusy(button, false); }
-    });
-
-    function jobPayload() {
-      return {
-        company: document.getElementById('jobCompany').value,
-        title: document.getElementById('jobTitle').value,
-        url: document.getElementById('jobUrl').value,
-        description: document.getElementById('jobDescription').value,
-      };
-    }
-    async function runAI(button, path, extra = {}) {
-      const output = document.getElementById('aiOutput');
-      setBusy(button, true, 'AI 分析中…');
-      message(document.getElementById('applicationMessage'), '请求已发送到服务端模型。');
-      try {
-        const data = await api(path, { method: 'POST', body: JSON.stringify({ ...jobPayload(), ...extra }) });
-        output.textContent = pretty(data.result);
-        message(document.getElementById('applicationMessage'), `已完成，记录编号 ${data.run_id}。`, 'success');
-      } catch (error) {
-        output.textContent = error.message;
-        message(document.getElementById('applicationMessage'), error.message, 'error');
-      } finally { setBusy(button, false); }
-    }
-    document.getElementById('evaluateBtn').addEventListener('click', event => runAI(event.currentTarget, '/api/jobs/evaluate'));
-    document.getElementById('generateBtn').addEventListener('click', event => runAI(event.currentTarget, '/api/applications/generate', { language: 'auto' }));
-    document.getElementById('refreshHistoryBtn').addEventListener('click', loadHistory);
-
-    (async () => {
-      if (!state.auth) return showLogin();
-      try {
-        await loadConfig();
-        await loadProfile();
-        hideLogin();
-      } catch (error) { showLogin(error.message); }
-    })();
-  </script>
+<div id="login" class="login"><form id="loginForm" class="loginbox"><h2>登录 AI Job Search</h2><p class="muted">账号由 WEB_USERNAME / WEB_PASSWORD 配置。</p><div class="field"><label>用户名</label><input id="loginUser" value="admin" autocomplete="username"></div><div class="field"><label>密码</label><input id="loginPass" type="password" autocomplete="current-password"></div><button class="btn primary">登录</button><div id="loginMsg" class="notice error"></div></form></div>
+<div class="shell">
+  <aside class="side"><div class="brand">AI Job Search</div><div class="sub">完整网页版 /apply · 密钥仅保存在服务端</div><div class="nav"><button class="active" data-page="profile">候选人档案</button><button data-page="search">岗位搜索</button><button data-page="apply">完整 /apply</button><button data-page="history">历史记录</button></div><div id="sys" class="status">正在读取系统状态…</div></aside>
+  <main>
+    <div class="head"><div><h1 id="pageTitle">候选人档案</h1><div id="pageSub" class="muted">编辑并保存用于所有匹配和申请的真实资料。</div></div><button id="logout" class="btn">退出</button></div>
+    <section id="page-profile" class="page"><div class="card"><h2>个人资料</h2><div class="field"><label>Markdown 候选人档案</label><textarea id="profileText"></textarea></div><div class="actions"><button id="saveProfile" class="btn primary">保存档案</button><button id="importProfile" class="btn">从 Claude Code 档案导入</button></div><div id="profileMsg" class="notice"></div></div></section>
+    <section id="page-search" class="page" hidden><div class="card"><h2>搜索公开岗位</h2><div class="row"><div class="field s6"><label>关键词</label><input id="q" value="Hadoop 运维"></div><div class="field s3"><label>地点</label><input id="loc" value="Shanghai, China"></div><div class="field s3"><label>最近天数</label><input id="age" type="number" value="14" min="1" max="365"></div></div><button id="search" class="btn primary">开始搜索</button><div id="searchMsg" class="notice"></div><div id="jobs"></div></div></section>
+    <section id="page-apply" class="page" hidden><div class="grid"><div class="card half"><h2>岗位信息</h2><div class="row"><div class="field s6"><label>公司</label><input id="company"></div><div class="field s6"><label>岗位</label><input id="role"></div><div class="field s6"><label>部门（可选）</label><input id="department"></div><div class="field s6"><label>地点（可选）</label><input id="jobLocation"></div><div class="field s12"><label>岗位链接（可选）</label><input id="url"></div></div><div class="field"><label>完整 JD（链接抓取失败时必须粘贴）</label><textarea id="jd"></textarea></div><div class="actions"><button id="evaluate" class="btn primary">第 1 步：评估匹配度</button><button id="confirm" class="btn good" disabled>确认并执行完整 /apply</button></div><div id="applyMsg" class="notice"></div></div><div class="card half"><h2>评估与最终报告</h2><pre id="output">先提交岗位进行匹配度评估。评估后由你明确确认，系统才会继续生成材料。</pre></div><div class="card half"><h2>执行进度</h2><div id="steps" class="steps"><div class="notice">尚未创建任务。</div></div></div><div class="card half"><h2>下载文件</h2><div id="artifacts" class="notice">任务完成后可下载 CV、求职信、核验报告和 ZIP。</div></div></div></section>
+    <section id="page-history" class="page" hidden><div class="card"><div class="actions" style="justify-content:space-between"><h2 style="margin:0">历史记录</h2><button id="refreshHistory" class="btn">刷新</button></div><div id="history"></div></div></section>
+  </main>
+</div>
+<script>
+const state={auth:sessionStorage.getItem('jobSearchAuth')||'',applyId:null,poll:null};
+const pageInfo={profile:['候选人档案','编辑并保存用于所有匹配和申请的真实资料。'],search:['岗位搜索','调用现有 LinkedIn / FreeHire CLI 搜索并去重。'],apply:['完整 /apply','评估后确认，依次执行初稿、复审、修订、PDF 检查和 ATS 核验。'],history:['历史记录','查看搜索、评估和既有生成记录。']};
+const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const pretty=v=>JSON.stringify(v,null,2);
+function headers(json=true){return {...(json?{'Content-Type':'application/json'}:{}),...(state.auth?{Authorization:`Basic ${state.auth}`}:{})}}
+async function api(path,opt={}){const r=await fetch(path,{...opt,headers:{...headers(true),...(opt.headers||{})}});const d=await r.json().catch(()=>({}));if(r.status===401){showLogin('登录失效，请重新登录。');throw new Error(d.detail||'未授权')}if(!r.ok)throw new Error(d.detail||pretty(d));return d}
+function busy(btn,on,text='处理中…'){btn.dataset.old??=btn.textContent;btn.disabled=on;btn.textContent=on?text:btn.dataset.old}function msg(el,text,kind=''){el.textContent=text||'';el.className=`notice ${kind}`}
+function showLogin(text=''){$('login').style.display='grid';$('loginMsg').textContent=text}function hideLogin(){$('login').style.display='none'}
+async function config(){const d=await api('/api/config');$('sys').innerHTML=`模型：${esc(d.model_name||'未配置')}<br>AI：${d.model_configured?'已配置':'未配置'}<br>岗位源：${esc((d.job_sources||[]).join(' / '))}`}
+async function loadProfile(){const d=await api('/api/profile');$('profileText').value=d.content||''}
+$('loginForm').onsubmit=async e=>{e.preventDefault();state.auth=btoa(unescape(encodeURIComponent(`${$('loginUser').value}:${$('loginPass').value}`)));try{await config();sessionStorage.setItem('jobSearchAuth',state.auth);hideLogin();await loadProfile()}catch(err){state.auth='';$('loginMsg').textContent=err.message}};
+$('logout').onclick=()=>{sessionStorage.removeItem('jobSearchAuth');state.auth='';showLogin()};
+document.querySelectorAll('.nav button').forEach(b=>b.onclick=async()=>{const p=b.dataset.page;document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.page').forEach(x=>x.hidden=x.id!==`page-${p}`);$('pageTitle').textContent=pageInfo[p][0];$('pageSub').textContent=pageInfo[p][1];if(p==='history')await loadHistory()});
+$('saveProfile').onclick=async e=>{busy(e.currentTarget,true);try{await api('/api/profile',{method:'PUT',body:JSON.stringify({content:$('profileText').value})});msg($('profileMsg'),'档案已保存。','success')}catch(err){msg($('profileMsg'),err.message,'error')}finally{busy(e.currentTarget,false)}};
+$('importProfile').onclick=async e=>{busy(e.currentTarget,true);try{const d=await api('/api/profile/import-local',{method:'POST'});$('profileText').value=d.content;msg($('profileMsg'),`已从 ${d.source} 导入。`,'success')}catch(err){msg($('profileMsg'),err.message,'error')}finally{busy(e.currentTarget,false)}};
+$('search').onclick=async e=>{const btn=e.currentTarget;busy(btn,true,'搜索中…');$('jobs').innerHTML='';try{const d=await api('/api/jobs/search',{method:'POST',body:JSON.stringify({query:$('q').value,location:$('loc').value,jobage:Number($('age').value||14),limit:20})});msg($('searchMsg'),`找到 ${d.count} 个岗位。${d.errors?.length?' 部分来源失败。':''}`,d.count?'success':'');$('jobs').innerHTML=(d.results||[]).map((j,i)=>`<div class="job"><div class="jobtop"><div><div class="title">${esc(j.title||'未命名岗位')}</div><div class="meta">${esc(j.company||'未知公司')} · ${esc(j.location||'地点未知')} · ${esc(j.date||'日期未知')}</div></div><span class="muted">${esc(j.source||'')}</span></div><div class="actions" style="margin-top:10px">${j.url?`<a class="btn" href="${esc(j.url)}" target="_blank" rel="noreferrer">打开岗位</a>`:''}<button class="btn" data-use="${i}">转到完整 /apply</button></div></div>`).join('')+(d.errors||[]).map(x=>`<div class="error">${esc(x.source)}：${esc(x.error)}</div>`).join('');document.querySelectorAll('[data-use]').forEach(x=>x.onclick=()=>{const j=d.results[Number(x.dataset.use)];$('company').value=j.company||'';$('role').value=j.title||'';$('jobLocation').value=j.location||'';$('url').value=j.url||'';$('jd').value=j.description||'';document.querySelector('[data-page="apply"]').click()})}catch(err){msg($('searchMsg'),err.message,'error')}finally{busy(btn,false)}};
+function payload(){return{company:$('company').value,title:$('role').value,department:$('department').value,location:$('jobLocation').value,url:$('url').value,description:$('jd').value,language:'auto'}}
+$('evaluate').onclick=async e=>{const btn=e.currentTarget;busy(btn,true,'评估中…');$('confirm').disabled=true;stopPoll();try{const d=await api('/api/full-apply/evaluate',{method:'POST',body:JSON.stringify(payload())});state.applyId=d.id;$('output').textContent=pretty(d.evaluation);renderSteps(d.steps);msg($('applyMsg'),`评估完成，任务编号 ${d.id}。请确认是否继续。`,'success');$('confirm').disabled=false}catch(err){msg($('applyMsg'),err.message,'error');$('output').textContent=err.message}finally{busy(btn,false)}};
+$('confirm').onclick=async e=>{if(!state.applyId)return;const btn=e.currentTarget;busy(btn,true,'启动中…');try{const d=await api(`/api/full-apply/${state.applyId}/confirm`,{method:'POST'});renderApply(d);msg($('applyMsg'),'完整 /apply 已进入后台执行。可以保持本页打开查看进度。','success');startPoll()}catch(err){msg($('applyMsg'),err.message,'error');busy(btn,false)}};
+function renderSteps(steps=[]){$('steps').innerHTML=steps.map(s=>`<div class="step ${esc(s.status)}"><span class="dot"></span><div><div class="title">${esc(s.label)}</div><div class="meta">${esc(s.status)}${s.message?` · ${esc(s.message)}`:''}</div></div></div>`).join('')||'<div class="notice">尚无步骤。</div>'}
+function renderApply(d){renderSteps(d.steps||[]);if(d.status==='awaiting_confirmation'){$('output').textContent=pretty(d.evaluation);$('confirm').disabled=false}else if(d.status==='completed'){$('output').textContent=pretty(d.result);$('confirm').disabled=true;msg($('applyMsg'),'完整 /apply 已完成。','success')}else if(d.status==='failed'){$('output').textContent=pretty({error:d.error,result:d.result});$('confirm').disabled=false;msg($('applyMsg'),d.error||'任务失败','error')}else{$('output').textContent=pretty({status:d.status,current_step:d.current_step,evaluation:d.evaluation});$('confirm').disabled=true}renderArtifacts(d.artifacts||[],d.id)}
+function renderArtifacts(items,id){$('artifacts').innerHTML=items.length?items.map(x=>`<div class="artifact"><div><div>${esc(x.name)}</div><div class="meta">${Math.ceil(x.size/1024)} KB</div></div><button class="btn" data-download="${esc(x.name)}">下载</button></div>`).join(''):'<div class="notice">暂无可下载文件。</div>';document.querySelectorAll('[data-download]').forEach(b=>b.onclick=()=>downloadFile(id,b.dataset.download))}
+async function downloadFile(id,name){const r=await fetch(`/api/full-apply/${id}/download/${encodeURI(name)}`,{headers:headers(false)});if(!r.ok){alert('下载失败');return}const blob=await r.blob();const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name.split('/').pop();a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function startPoll(){stopPoll();state.poll=setInterval(poll,2000);poll()}function stopPoll(){if(state.poll)clearInterval(state.poll);state.poll=null}async function poll(){if(!state.applyId)return;try{const d=await api(`/api/full-apply/${state.applyId}`);renderApply(d);if(['completed','failed'].includes(d.status)){stopPoll();busy($('confirm'),false);$('confirm').disabled=d.status==='completed'}}catch(err){stopPoll();msg($('applyMsg'),err.message,'error')}}
+async function loadHistory(){const d=await api('/api/history');$('history').innerHTML=(d.items||[]).map(x=>`<div class="history"><div class="title">${esc(x.title)}</div><div class="meta">${esc(x.kind)} · ${esc(x.created_at)}</div><details><summary>查看</summary><pre>${esc(pretty(x.result))}</pre></details></div>`).join('')||'<div class="notice">暂无记录。</div>'}
+$('refreshHistory').onclick=loadHistory;
+(async()=>{if(!state.auth)return showLogin();try{await config();await loadProfile();hideLogin()}catch(err){showLogin(err.message)}})();
+</script>
 </body>
 </html>
