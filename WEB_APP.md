@@ -55,6 +55,8 @@ The page also provides three live checks:
 - Browser-saved values override `.env.web` immediately and survive container restarts.
 - Changing the administrator account automatically updates the current browser session.
 
+Do not change model or strict-mode settings while an `/apply` task is already running. Runtime changes take effect immediately and are intended for subsequent tasks.
+
 `SERVER_PORT` is intentionally not editable in the browser because changing it also requires updating Docker's host-port mapping. Continue managing the port through `.env.web` and Docker Compose.
 
 ## Privacy and safety
