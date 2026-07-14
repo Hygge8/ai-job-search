@@ -1,4 +1,4 @@
-"""Web entry point that layers the complete /apply pipeline onto the MVP app."""
+"""Web entry point for the complete /apply pipeline and settings console."""
 from __future__ import annotations
 
 from fastapi import Depends, HTTPException
@@ -6,15 +6,19 @@ from fastapi.responses import FileResponse
 
 from webapp.main import app, require_auth
 from webapp.full_apply import FullApplyRequest, manager
+from webapp.settings_api import router as settings_router
 
 # webapp.main registers its SPA catch-all before this module is imported.
-# Move it behind the new GET API routes so /api/full-apply/* is not swallowed.
+# Move it behind the additional API routes so /api/full-apply/* and
+# /api/settings/* are not swallowed by the browser fallback.
 _spa_catch_all = next(
     (route for route in list(app.router.routes) if getattr(route, "path", None) == "/{full_path:path}"),
     None,
 )
 if _spa_catch_all is not None:
     app.router.routes.remove(_spa_catch_all)
+
+app.include_router(settings_router)
 
 
 @app.post("/api/full-apply/evaluate")
@@ -68,4 +72,10 @@ if _spa_catch_all is not None:
 if __name__ == "__main__":
     import os
     import uvicorn
-    uvicorn.run("webapp.full_app:app", host="0.0.0.0", port=int(os.getenv("SERVER_PORT", "8000")), reload=False)
+
+    uvicorn.run(
+        "webapp.full_app:app",
+        host="0.0.0.0",
+        port=int(os.getenv("SERVER_PORT", "8000")),
+        reload=False,
+    )
