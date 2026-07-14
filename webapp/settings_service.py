@@ -6,8 +6,6 @@ override them at runtime and survive container restarts through web-data/.
 """
 from __future__ import annotations
 
-import base64
-import json
 import os
 import sqlite3
 import time
@@ -19,7 +17,7 @@ from openai import OpenAI
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DATABASE_FILE = Path(os.getenv("WEB_DATABASE_FILE", str(ROOT / "web-data" / "app.sqlite3")))
+DATABASE_FILE = Path(os.getenv("WEB_DATABASE_FILE", str(ROOT / "web-data/app.sqlite3")))
 
 DEFAULTS: dict[str, str] = {
     "OPENAI_API_KEY": "",
@@ -34,8 +32,6 @@ DEFAULTS: dict[str, str] = {
     "WEB_USERNAME": "admin",
     "WEB_PASSWORD": "admin123",
 }
-
-SECRET_KEYS = {"OPENAI_API_KEY", "TAVILY_API_KEY", "WEB_PASSWORD"}
 
 
 def _as_bool(value: str) -> bool:
@@ -265,7 +261,6 @@ class SettingsService:
             response = client.chat.completions.create(
                 model=model,
                 temperature=0,
-                max_tokens=20,
                 messages=[{"role": "user", "content": "Reply with exactly: OK"}],
             )
             reply = (response.choices[0].message.content or "").strip()
@@ -290,7 +285,6 @@ class SettingsService:
             response = client.chat.completions.create(
                 model=model,
                 temperature=0,
-                max_tokens=30,
                 messages=[
                     {
                         "role": "user",
