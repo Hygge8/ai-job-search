@@ -1,0 +1,38 @@
+FROM oven/bun:1 AS bun-runtime
+
+FROM python:3.11-slim-bookworm
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    TZ=Asia/Shanghai
+
+WORKDIR /app
+
+COPY --from=bun-runtime /usr/local/bin/bun /usr/local/bin/bun
+
+COPY requirements-web.txt /app/requirements-web.txt
+RUN pip install --no-cache-dir -r /app/requirements-web.txt
+
+# Only copy the files required by the web runtime. Personal documents and generated
+# application PDFs are intentionally not baked into the image.
+COPY webapp /app/webapp
+COPY .agents /app/.agents
+COPY .claude /app/.claude
+COPY CLAUDE.md /app/CLAUDE.md
+
+# Install dependencies for all shipped job portal CLIs. Portals with no runtime
+# dependencies still work; bun install only adds their development/runtime packages.
+RUN set -eux; \
+    for tool in jobbank-search jobdanmark-search jobindex-search jobnet-search linkedin-search freehire-search; do \
+      cli="/app/.agents/skills/${tool}/cli"; \
+      if [ -f "${cli}/package.json" ]; then \
+        cd "${cli}"; \
+        bun install; \
+      fi; \
+    done; \
+    cd /app; \
+    mkdir -p /app/web-data
+
+EXPOSE 8000
+
+CMD ["python", "-m", "webapp.main"]
