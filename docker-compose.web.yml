@@ -11,7 +11,7 @@ services:
     environment:
       WEB_DATABASE_FILE: /app/web-data/app.sqlite3
     ports:
-      - "${SERVER_PORT:-8000}:8000"
+      - "${SERVER_PORT:-8000}:${SERVER_PORT:-8000}"
     volumes:
       - ./web-data:/app/web-data
       # Keep the locally generated profile available without baking personal data
