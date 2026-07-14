@@ -1,0 +1,18 @@
+# Send only the web runtime and framework files required by Dockerfile.web.
+# This prevents local CVs, generated applications, API keys, and SQLite data
+# from entering the Docker build context.
+*
+!Dockerfile.web
+!requirements-web.txt
+!webapp/**
+!.agents/**
+!.claude/**
+!CLAUDE.md
+
+.agents/**/node_modules/
+.agents/**/*.log
+.agents/usage/
+.claude/projects/
+.env
+.env.*
+web-data/
