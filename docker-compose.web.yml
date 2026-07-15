@@ -3,6 +3,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.web
+      args:
+        # The defaults below are faster for many mainland-China networks. Change
+        # them in .env.web when another mirror is more reliable in your region.
+        DEBIAN_MIRROR: ${DEBIAN_MIRROR:-https://mirrors.aliyun.com/debian}
+        DEBIAN_SECURITY_MIRROR: ${DEBIAN_SECURITY_MIRROR:-https://mirrors.aliyun.com/debian-security}
     image: ai-job-search-web:full-apply
     container_name: ai-job-search-web
     init: true
