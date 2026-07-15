@@ -1,6 +1,11 @@
+# syntax=docker/dockerfile:1.7
+
 FROM oven/bun:1 AS bun-runtime
 
 FROM python:3.11-slim-bookworm
+
+ARG DEBIAN_MIRROR=https://deb.debian.org/debian
+ARG DEBIAN_SECURITY_MIRROR=https://deb.debian.org/debian-security
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -10,18 +15,43 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 COPY --from=bun-runtime /usr/local/bin/bun /usr/local/bin/bun
 
+# Allow Docker Compose to select a geographically closer Debian mirror. Debian
+# slim images normally use deb822 .sources files, while some derivatives still
+# use sources.list, so update both forms when present.
+RUN set -eux; \
+    for file in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do \
+      [ -f "$file" ] || continue; \
+      sed -ri \
+        -e "s|https?://deb.debian.org/debian-security|${DEBIAN_SECURITY_MIRROR}|g" \
+        -e "s|https?://security.debian.org/debian-security|${DEBIAN_SECURITY_MIRROR}|g" \
+        -e "s|https?://deb.debian.org/debian|${DEBIAN_MIRROR}|g" \
+        "$file"; \
+    done; \
+    printf '%s\n' \
+      'Acquire::Retries "20";' \
+      'Acquire::http::Timeout "120";' \
+      'Acquire::https::Timeout "120";' \
+      'Acquire::http::Pipeline-Depth "0";' \
+      'Acquire::https::Pipeline-Depth "0";' \
+      'APT::Get::Assume-Yes "true";' \
+      > /etc/apt/apt.conf.d/80-network-retries
+
 # Full /apply needs both TeX engines, moderncv/fontawesome packages, CJK fonts,
-# Poppler PDF inspection/rendering tools, and a tiny init process.
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-       ca-certificates tini \
-       texlive-luatex texlive-xetex texlive-latex-extra texlive-fonts-extra texlive-lang-chinese \
-       fonts-noto-cjk poppler-utils ghostscript \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+# Poppler PDF inspection/rendering tools, and a tiny init process. BuildKit cache
+# mounts retain already downloaded .deb files when a slow connection fails, so a
+# retry continues instead of downloading the full TeX stack again.
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+      ca-certificates tini poppler-utils ghostscript; \
+    apt-get install -y --no-install-recommends \
+      texlive-luatex texlive-xetex texlive-latex-extra texlive-fonts-extra \
+      texlive-lang-chinese fonts-noto-cjk
 
 COPY requirements-web.txt /app/requirements-web.txt
-RUN pip install --no-cache-dir -r /app/requirements-web.txt
+RUN pip install --no-cache-dir --retries 20 --timeout 120 -r /app/requirements-web.txt
 
 # .dockerignore prevents local CVs, profile data, API keys, generated PDFs,
 # trackers, and documents from entering the build context.
