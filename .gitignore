@@ -75,3 +75,7 @@ upskill/*.md
 
 # Brainstorm mockups (superpowers visual companion) - never ship
 .superpowers/
+
+# Web application runtime and secrets
+.env.web
+web-data/

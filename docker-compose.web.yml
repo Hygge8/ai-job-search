@@ -1,0 +1,31 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        # The defaults below are faster for many mainland-China networks. Change
+        # them in .env.web when another mirror is more reliable in your region.
+        DEBIAN_MIRROR: ${DEBIAN_MIRROR:-https://mirrors.aliyun.com/debian}
+        DEBIAN_SECURITY_MIRROR: ${DEBIAN_SECURITY_MIRROR:-https://mirrors.aliyun.com/debian-security}
+    image: ai-job-search-web:full-apply
+    container_name: ai-job-search-web
+    init: true
+    env_file:
+      - .env.web
+    environment:
+      WEB_DATABASE_FILE: /app/web-data/app.sqlite3
+      APPLY_ARTIFACT_ROOT: /app/web-data/applications
+    ports:
+      - "${SERVER_PORT:-8000}:${SERVER_PORT:-8000}"
+    volumes:
+      - ./web-data:/app/web-data
+      # Mount personalized local framework files at runtime instead of baking
+      # names, contact details, experience, or generated CVs into the image.
+      - ./CLAUDE.md:/app/CLAUDE.md:ro
+      - ./.claude/skills/job-application-assistant:/app/.claude/skills/job-application-assistant:ro
+      - ./cv:/app/cv:ro
+      - ./cover_letters:/app/cover_letters:ro
+      # To enable salary benchmarking, uncomment after creating salary_data.json:
+      # - ./salary_data.json:/app/salary_data.json:ro
+    restart: unless-stopped
